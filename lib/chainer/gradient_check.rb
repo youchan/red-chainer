@@ -222,7 +222,7 @@ module Chainer
       gx, = numerical_grad(f, [cx.data], y_grad, eps)
       Chainer::Testing.assert_allclose(x.grad, gx, atol: atol, rtol: rtol)
       if dtype.nil?
-        raise unless gx.class == x.grad.class
+        raise "gx.class(#{gx.class}) != x.grad.class(#{x.grad.class})" unless gx.class == x.grad.class
       else
         if ((gx.class != Numo::DFloat) and (gx.class != Numo::SFloat)) and (gx.class != dtype)
            raise
@@ -233,7 +233,7 @@ module Chainer
     params.each do |p|
       gp, = numerical_grad(f, [p.data], y_grad, eps)
       Chainer::Testing.assert_allclose(p.grad, gp, atol: atol, rtol: rtol)
-      raise unless gp.dtype === p.grad.dtype
+      raise "gp.class(#{gp.class}) != p.grad.class(#{p.grad.class})" unless gp.class == p.grad.class
     end
   end
   module_function :_copy_arrays, :numerical_grad, :_as_tuple, :check_backward
