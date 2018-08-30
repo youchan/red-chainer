@@ -1,20 +1,24 @@
 class SkipGram < Chainer::Chain
+  attr_reader :embed
+
   def initialize(n_vocab, n_units, loss_func)
     super()
     init_scope do
-      @embed = Chainer::Links::Connection::EmbedID.new(nil, n_vocab, n_units, initial_weight: Chainer::Iinitializers::Uniform.new(1. / n_units), loss_func: loss_func)
+      initial_weight = Chainer::Initializers::Uniform.new(scale: (1.0 / n_units))
+      @embed = Chainer::Links::Connection::EmbedID.new(n_vocab, n_units, initial_w: initial_weight)
       @loss_func = loss_func
     end
   end
 
-  def call(x, contexts):
+  def call(args, **options)
+    (x, contexts) = args
     e = @embed.(contexts)
     shape = e.shape
-    x = Chainer::Functions::Array::BroadcastTo.broadcast_to(x[:, None], (shape.batch_size, shape.n_context))
-    e = Chainer::Functions::Array::Reshape.reshape(e, (shape.batch_size * shape.n_context, shape.n_units))
-    x = Chainer::Functions::Array::Reshape.reshape(x, (shape.batch_size * shape.n_context,))
-    loss = @loss_func(e, x)
-    reporter.report({'loss': loss}, self)
+    x = Chainer::Functions::Array::BroadcastTo.broadcast_to(x.reshape(x.size, 1), shape[0, 2])
+    e = Chainer::Functions::Array::Reshape.reshape(e, [shape[0] * shape[1], shape[2]])
+    x = Chainer::Functions::Array::Reshape.reshape(x, [shape[0] * shape[1]])
+    loss = @loss_func.(e, x)
+    Chainer::Reporter.save_report({loss: loss}, self)
     loss
   end
 end
