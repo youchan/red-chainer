@@ -7,11 +7,10 @@ class CBoW < Chainer::Chain
     end
   end
 
-  def call(x, contexts):
-    e = self.embed(contexts)
+  def call(x, contexts)
+    e = @embed.(contexts)
     h = F.sum(e, axis=1) * (1. / contexts.shape[1])
-    loss = self.loss_func(h, x)
-    reporter.report({'loss': loss}, self)
-    return loss
+    loss = @loss_func.(h, x)
+    loss
   end
 end
