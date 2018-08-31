@@ -100,7 +100,8 @@ class Chainer::VariableTest < Test::Unit::TestCase
     length.times{|i|
       ret.push(constant([ret[i]], [@a]))
     }
-    ret[-1].grad = ret[-1].data.new_zeros()
+
+    ret[-1].grad = ret[-1].data.yield_self{|x| x.class.zeros(x.shape) }
     return ret
   end
 
@@ -110,6 +111,72 @@ class Chainer::VariableTest < Test::Unit::TestCase
     ret = create_linear_chain(2, false)
     check_backward([ret[0]], [ret[1]], [ret[2]], false)
   end
+
+  data(data)
+  def test_backward_cpu_retain_grad(data)
+    _setup(data)
+    ret = create_linear_chain(2, false)
+    check_backward([ret[0]], [ret[1]], [ret[2]], true)
+  end
+
+
+  # data(data)
+  # def test_unchain(data)
+  #   _setup(data)
+  #   ret = create_linear_chain(3, false)
+  #   old_rank = ret[1].rank
+  #   ret[1].unchain()
+  #   assert_nil(ret[1].creator)
+  #   assert_equal(ret[1].rank, old_rank)
+  #   check_backward([ret[1]], [ret[2]], [ret[3]], false)
+  # end
+
+
+  data(data)
+  def test_set_none_to_creator(data)
+    _setup(data)
+    ret = create_linear_chain(3, false)
+    old_rank = ret[1].rank
+    ret[1].creator = nil
+    assert_nil(ret[1].creator)
+    assert_equal(ret[1].rank, old_rank)
+    check_backward([ret[1]], [ret[2]], [ret[3]], false)
+  end
+
+  data(data)
+  def test_set_none_and_original_to_creator(data)
+    _setup(data)
+    ret = create_linear_chain(2, false)
+    old_rank = ret[1].rank
+    creator = ret[1].creator
+    ret[1].creator = nil
+    assert_nil(ret[1].creator)
+    assert_equal(ret[1].rank, old_rank)
+
+    ret[1].node.rank = -1
+    ret[1].creator = creator
+    assert_equal(ret[1].creator, creator)
+    assert_equal(ret[1].rank, creator.rank + 1)
+    check_backward([ret[0]], [ret[1]], [ret[2]], false)
+  end
+
+  data(data)
+  def test_set_fresh_creator(data)
+    _setup(data)
+    v = Chainer::Variable.new
+    f = Chainer::Function.new
+    v.creator = f
+    assert_equal(v.creator, f)
+    assert_equal(v.rank, 1)
+  end
+
+  # data(data)
+  # def test_unchain_backward_cpu(data)
+  #   _setup(data)
+  #   ret = create_linear_chain(3, false)
+  #   ret[1].unchain_backward()
+  #   self.check_backward([ret[1]], [ret[2]], [ret[3]], false)
+  # end
 
   def test_grad_type_check_pass()
     a = Chainer::Variable.new(Numo::SFloat.new([3]))

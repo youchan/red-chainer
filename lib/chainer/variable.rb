@@ -103,7 +103,7 @@ module Chainer
 
         unless retain_grad
           outputs.each do |y|
-            unless y.nil? || y == @node
+            if y && y != @node
               y.grad = nil
             end
           end
