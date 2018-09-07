@@ -20,14 +20,40 @@ module Chainer
           x = inputs[0]
           w = inputs[1]
 
+          if x.shape[0] == 0
+            y = x.class.new(0, w.shape[0])
+            return [y]
+          end
+
           y = x.dot(w.transpose).cast_to(x.class)
+
           if inputs.size == 3
             b = inputs[2]
             y += b
           end
+<<<<<<< HEAD
 
           retain_inputs([0, 1])
           return [y]
+=======
+
+          [y]
+        end
+
+        def backward(inputs, grad_outputs)
+          x = as_mat(inputs[0])
+          w = inputs[1]
+
+          gy = grad_outputs[0]
+          gx = gy.dot(w).cast_to(x.class).reshape(*inputs[0].shape)
+          gw = gy.transpose.dot(x).cast_to(w.class)
+          if inputs.size == 3
+            gb = gy.sum(0)
+            [gx, gw, gb]
+          else
+            [gx, gw]
+          end
+>>>>>>> lstm
         end
 
         def backward(indexes, grad_outputs)
