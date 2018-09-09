@@ -77,5 +77,15 @@ module Chainer
         @retain_after_backward = retain_after_backward
       end
     end
+
+    # Purges in/out nodes and this function itself from the graph.
+    #
+    # This method is called from :meth:`Variable.unchain_backward` method.
+    def unchain
+      @outputs.each do |y|
+        y.unchain if y.weakref_alive?
+      end
+      @inputs = nil
+    end
   end
 end

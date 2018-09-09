@@ -21,8 +21,8 @@ module Chainer
     end
 
     def call_hooks
-      @hooks.each do |hook|
-        _call_hook(hook)
+      @hooks.values.each do |hook|
+        call_hook(hook)
         reallocate_cleared_grads
       end
     end

@@ -1,24 +1,28 @@
 module Chainer
   class Variable
-    attr_accessor :data, :grad, :requires_grad, :node
+    attr_accessor :requires_grad, :node
 
     def initialize(data=nil, name: nil, grad: nil, requires_grad: true)
       unless data.nil? || data.is_a?(Numo::NArray)
         raise TypeError, "Numo::NArray are expected."
       end
 
-      @data = [data]
+      @data = data
       @grad = grad
       @requires_grad = requires_grad
       @node = VariableNode.new(variable: self, name: name, grad: grad)
     end
 
+    def inspect
+      {data: @data.inspect, grad: @grad.inspect, requires_grad: @requires_grad.inspect}.inspect
+    end
+
     def data
-      return @data[0]
+      return @data
     end
 
     def data=(d)
-      @data[0] = d
+      @data = d
       @node.set_data_type(d)
     end
 
@@ -150,6 +154,47 @@ module Chainer
       end 
     end
 
+    # Deletes the reference to the creator of this variable.
+    #
+    # This method deletes the reference to the creator from the corresponding
+    # variable node. Unlike :meth:`unchain_backward`, it does not backtrack
+    # the graph.
+    #
+    # This method is equivalent to ``self.creator = None``.
+    def unchain
+        self.creator = nil
+    end
+
+    # Deletes references between variable nodes and functions backward.
+    #
+    # After this method completes, intermediate variable nodes and functions
+    # that are not referenced from anywhere are deallocated by reference
+    # count GC. Also this variable itself deletes the reference to its
+    # creator function from the node, i.e. the node becomes root in the
+    # computation graph. It indicates that backprop after unchaining stops at
+    # this variable. This behavior is useful to implement truncated BPTT.
+    def unchain_backward
+      cand_funcs = []
+      seen_set = Set.new()
+
+      add_cand = Proc.new do |cand|
+        if cand && !seen_set.include?(cand)
+          cand_funcs.append(cand)
+          seen_set.add(cand)
+        end
+      end
+
+      add_cand.(self.creator)
+
+      while cand_funcs.size > 0
+        func = cand_funcs.pop
+        func.inputs.each do |var|
+          add_cand.(var.creator)
+        end
+        func.unchain()
+      end
+    end
+
     def -@
       Functions::Math::Neg.new.(self) 
     end
@@ -195,7 +240,7 @@ module Chainer
     end
 
     def retain_data
-      @node.data = @data[0]
+      @node.data = @data
     end
 
     # when left side is Numeric value and right side is Chainer::Value, call this method.

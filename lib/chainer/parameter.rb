@@ -40,7 +40,7 @@ module Chainer
       ginit = @grad_initializer
       grad = ginit.nil? ? nil : Chainer::Initializers.generate_array(ginit, shape)
 
-      @data[0] = data
+      @data = data
       @node.grad = grad
     end
 

@@ -3,6 +3,7 @@ module Chainer
     module Model
       class Classifier < Chain
         attr_accessor :compute_accuracy
+        attr_reader :predictor
 
         def initialize(predictor, lossfun=Functions::Loss::SoftmaxCrossEntropy.method(:softmax_cross_entropy), accfun=Functions::Evaluation::Accuracy.method(:accuracy))
           super()
