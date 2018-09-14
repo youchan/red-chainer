@@ -13,15 +13,14 @@ module Chainer::Functions::Activation
       (a, i, f, o) = LSTM.extract_gates(x)
       batch_idx = [(0...x.shape[0]).to_a] + [true] * (c_prev.shape.size - 1)
 
-      @a = a.class::Math.tanh(a)
-      #@a = a if a.shape[0] == 0
+      @a = Numo::NMath.tanh(a)
       @i = LSTM.sigmoid(i)
       @f = LSTM.sigmoid(f)
       @o = LSTM.sigmoid(o)
 
       c_next = c_prev.class.zeros(c_prev.shape)
       c_next[*batch_idx] = @a * @i + @f * c_prev[*batch_idx]
-      h = @o * c_next.class::Math.tanh(c_next[*batch_idx])
+      h = @o * Numo::NMath.tanh(c_next[*batch_idx])
 
       next_batch_idx = [(x.shape[0]...c_prev.shape[0]).to_a] + [true] * (c_prev.shape.size - 1)
       c_next[*next_batch_idx] = c_prev[*next_batch_idx]
@@ -51,7 +50,7 @@ module Chainer::Functions::Activation
 
       gh = 0 unless gh
 
-      co = @c.class::Math.tanh(@c)
+      co = Numo::NMath.tanh(@c)
       gc_prev = c_prev.class.zeros(c_prev.shape)
       # multiply f later
       gc_prev[*batch_idx] = gh * @o * LSTM.grad_tanh(co) + gc_update
@@ -60,7 +59,7 @@ module Chainer::Functions::Activation
       gi[*([:*] * gc.shape.size)] = gc * @a * LSTM.grad_sigmoid(@i)
       gf[*([:*] * gc.shape.size)] = gc * c_prev[*batch_idx] * LSTM.grad_sigmoid(@f)
       go[*([:*] * gc.shape.size)] = gh * co * LSTM.grad_sigmoid(@o)
-      gc_prev[*batch_idx] *= @f  # multiply f here
+      gc_prev[*batch_idx].inplace * @f  # multiply f here
       gc_prev[*batch_idx_rest] = gc_rest
 
       [gc_prev, gx]
@@ -71,9 +70,6 @@ module Chainer::Functions::Activation
     end
 
     def self.extract_gates(x)
-      # if x.shape[0] == 0
-      #   return [x.class.new(0, x.shape[1]/4, *x.shape.drop(2))] * 4
-      # end
       r = Numo::Int32[*(0...x.shape[1]).step(4)]
       4.times.map do |i|
         x[true, r+i, *([true] * (x.shape.size - 2))]
@@ -81,10 +77,8 @@ module Chainer::Functions::Activation
     end
 
     def self.sigmoid(x)
-      #return x if x.shape[0] == 0
-
       half = 0.5
-      x.class::Math.tanh(x * half) * half + half
+      Numo::NMath.tanh(x * half) * half + half
     end
 
     def self.grad_sigmoid(x)

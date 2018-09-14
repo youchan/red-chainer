@@ -222,8 +222,7 @@ module Chainer::Links::Connection
         if batch == 0
           h_rest = @h
         elsif h_size < batch
-          msg = ['The batch size of x must be equal to or less than',
-                'the size of the previous state h.'].join
+          msg = "The batch size of x (#{batch}) must be equal to or less than the size of the previous state h (#{h_size})."
           raise TypeError.new(msg)
         elsif h_size > batch
           h_update, h_rest = Chainer::Functions::Array::SplitAxis.split_axis(@h, [batch], 0)

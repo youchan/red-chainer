@@ -57,7 +57,7 @@ module Chainer
             mean = x.mean(axis: axis)
             # FIXME: numpy.var
             var = x.var(axis: axis)
-            var += @eps
+            var.inplace + @eps
           else
             mean = @fixed_mean
             var = @fixed_var + @eps
@@ -71,20 +71,20 @@ module Chainer
           x_mu /= @std.reshape(*std_expander)
           @x_hat = x_mu
           y = gamma * @x_hat
-          y += beta
+          y.inplace + beta
 
           if Chainer.configuration.train
             m = x.size.div(gamma.size)
             adjust = m / [m - 1.0, 1.0].max
-            @running_mean *= @decay
+            @running_mean.inplace * @decay
             temp_ar = Numo::NArray[*mean]
-            temp_ar *= (1 - @decay)
+            temp_ar.inplace * (1 - @decay)
             @running_mean += temp_ar
             
             @running_var *= @decay
             temp_ar = Numo::NArray[*var]
-            temp_ar *= ((1 - @decay) * adjust)
-            @running_var += temp_ar
+            temp_ar.inplace * ((1 - @decay) * adjust)
+            @running_var.inplace + temp_ar
           end
 
           [y,]

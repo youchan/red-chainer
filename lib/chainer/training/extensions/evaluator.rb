@@ -83,10 +83,10 @@ module Chainer
             Chainer.configuration.train = false
             result = evaluate()
             Chainer.configuration.train = old_train
+            Reporter.save_report(result)
           end
 
-          Reporter.save_report(result)
-          return result
+          result
         end
 
         # Evaluates the model and returns a result dictionary.

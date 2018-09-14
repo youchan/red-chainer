@@ -90,6 +90,8 @@ module Chainer
       end
 
       funcs = [self.creator]
+      seen_set = Set.new
+      seen_set.add(self.creator)
 
       while func = funcs.pop
         outputs = func.outputs.map(&:__getobj__)
@@ -136,7 +138,10 @@ module Chainer
               end
             end
           else # not leaf
-            funcs << x.creator
+            unless seen_set.include?(x.creator)
+              funcs << x.creator
+              seen_set.add(x.creator)
+            end
             if seen_vars.include?(id_x)
               if need_copy.include?(id_x)
                 x.grad = Utils::Array.force_array(gx + x.grad)

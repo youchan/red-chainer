@@ -34,6 +34,10 @@ module Chainer
           end
           @loss
         end
+        
+        def copy
+          super
+        end
       end
     end
   end

@@ -38,7 +38,7 @@ module Chainer
           end
           if @class_weight
             shape = x.ndim.times.map { |e| e == 1 ? true : 1 }
-            log_y *= Chainer::Utils::Array.broadcast_to(@class_weight.reshape(*shape), x.shape)
+            log_y.inplace * Chainer::Utils::Array.broadcast_to(@class_weight.reshape(*shape), x.shape)
           end
           log_yd = Chainer::Utils::Array.rollaxis(log_y, 1)
           begin
@@ -90,13 +90,13 @@ module Chainer
               shape = x.ndim.times.map { |d| d == 1 ? true : 1 }
               c = Chainer::Utils::Array.broadcast_to(@class_weight.reshape(*shape), x.shape)
               c = c.class.cast(t.class.new(t.shape[0]).seq.to_a.zip(t.class.maximum(t, 0).to_a).map{|v| c[*v]})
-              gx *= Chainer::Utils::Array.broadcast_to(c.expand_dims(1), gx.shape)
+              gx.inplace * Chainer::Utils::Array.broadcast_to(c.expand_dims(1), gx.shape)
             end
 
             bit = t.flatten.dup
             bit[t.ne(@ignore_label)] = 1
             bit[bit.ne(1)] = 0
-            gx *= bit.reshape(t.shape[0], 1)
+            gx.inplace * bit.reshape(t.shape[0], 1)
           else
             # in the case where y.ndim is higher than 2,
             # we think that a current implementation is inefficient
@@ -113,16 +113,16 @@ module Chainer
               c = c.reshape(*gx.shape)
               c = c.class.cast(fst_index.to_a.zip(t.class.maximum(t.flatten.dup, 0).to_a, trd_index.to_a).map{|v| c[*v]})
               c = c.reshape(y.shape[0], 1, true)
-              gx *= Chainer::Utils::Array.broadcast_to(c, gx.shape)
+              gx.inplace * Chainer::Utils::Array.broadcast_to(c, gx.shape)
             end
-            gx *= (t.ne @ignore_label).reshape(t.shape[0], 1, true)
+            gx.inplace * (t.ne @ignore_label).reshape(t.shape[0], 1, true)
             gx = gx.reshape(*y.shape)
           end
 
           if @reduce == 'mean'
-            gx *= gloss * @coeff
+            gx.inplace * gloss * @coeff
           else
-            gx *= gloss[true,:- , false]
+            gx.inplace * gloss[true,:- , false]
           end
           return [gx, nil]
         end

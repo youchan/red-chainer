@@ -10,6 +10,7 @@ module Chainer
       link.params do |param|
         param.update_rule = create_update_rule
       end
+      reallocate_cleared_grads
     end
 
     def reallocate_cleared_grads
