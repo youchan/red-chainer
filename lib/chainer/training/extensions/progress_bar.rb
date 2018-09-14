@@ -44,12 +44,12 @@ module Chainer
             rate = epoch.to_f / length
           end
 
-          marks = '#' * (rate * @bar_length).to_i
-          @out.write(sprintf("     total [%s%s] %6.2f%\n", marks, '.' * (@bar_length - marks.size), rate * 100))
+          bar_total = ('#' * (rate * @bar_length).to_i).ljust(@bar_length, '.')
+          @out.write("     total #{bar_total} %6.2f%\n" % (rate * 100))
 
           epoch_rate = epoch - epoch.to_i
-          marks = '#' * (epoch_rate * @bar_length).to_i
-          @out.write(sprintf("this epoch [%s%s] %6.2f%\n", marks, '.' * (@bar_length - marks.size), epoch_rate * 100))
+          bar_epoch = ('#' * (epoch_rate * @bar_length).to_i).ljust(@bar_length, '.')
+          @out.write("this epoch #{bar_epoch} %6.2f%\n" % (epoch_rate * 100))
 
           status = @status_template.result(trainer.updater.bind)
           @out.write(status)
@@ -57,21 +57,18 @@ module Chainer
           old_t, old_e, old_sec = @recent_timing[0]
           span = now - old_sec
 
-          if span.zero?
-            speed_t = Float::INFINITY
-            speed_e = Float::INFINITY
-          else
-            speed_t = (iteration - old_t) / span
-            speed_e = (epoch - old_e) / span
-          end
+          speed_t = iteration - old_t == 0 ? 0.0 : (iteration - old_t) / span
 
           if unit == 'iteration'
             estimated_time = (length - iteration) / speed_t
           else
+            speed_e = (epoch - old_e) / span
             estimated_time = (length - epoch) / speed_e
           end
 
-          @out.write(sprintf("%10.5g iters/sec. Estimated time to finish: %s.\n", speed_t, (Time.parse("1991/01/01") + (estimated_time)).strftime("%H:%m:%S")))
+          estimated_time = 0.0 if estimated_time.nan? || estimated_time.infinite?
+
+          @out.write("%10.5g iters/sec. Estimated time to finish: #{Time.at(estimated_time).getutc.strftime("%H:%M:%S")}.\n" % speed_t)
 
           # move the cursor to the head of the progress bar
           @out.write("\033[4A") # TODO: Support Windows

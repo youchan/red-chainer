@@ -25,7 +25,7 @@ module Chainer
       rate = @threshold / norm[0]
       if rate < 1
         params.each do |param|
-          param.grad *= rate
+          param.grad.inplace * rate
         end
       end
     end

@@ -76,7 +76,7 @@ module Chainer
           end
           if @class_weight
             shape = x.ndim.times.map { |e| e == 1 ? true : 1 }
-            log_y *= Chainer::Utils::Array.broadcast_to(@class_weight.reshape(*shape), x.shape)
+            log_y.inplace * Chainer::Utils::Array.broadcast_to(@class_weight.reshape(*shape), x.shape)
           end
           log_yd = Chainer::Utils::Array.rollaxis(log_y, 1)
           begin
@@ -148,8 +148,9 @@ module Chainer
               c = c.reshape(*gx.shape)
               c = c[fst_index, t.class.maximum(t.flatten.dup, 0), trd_index].diagonal.diagonal.dup
               c = c.reshape(y.shape[0], 1, true)
-              gx *= Chainer::Utils::Array.broadcast_to(c, gx.shape)
+              gx.inplace * Chainer::Utils::Array.broadcast_to(c, gx.shape)
             end
+
             if @ignore_label
               gx *= (t.ne @ignore_label).reshape(t.shape[0], 1, true)
             end
@@ -157,9 +158,9 @@ module Chainer
           end
 
           if @reduce == 'mean'
-            gx *= gloss * @coeff
+            gx.inplace * gloss * @coeff
           else
-            gx *= gloss[true,:- , false]
+            gx.inplace * gloss[true,:- , false]
           end
           return [gx, nil]
         end

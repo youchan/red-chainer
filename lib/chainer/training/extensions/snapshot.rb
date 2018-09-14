@@ -4,7 +4,7 @@ module Chainer
       class Snapshot < Extension
         attr_accessor :save_class, :filename_proc, :target
 
-        def self.snapshot_object(target:, save_class:, &block)
+        def self.snapshot_object(target:, save_class: nil, &block)
           self.new(save_class: save_class, filename_proc: block, target: target)
         end
 

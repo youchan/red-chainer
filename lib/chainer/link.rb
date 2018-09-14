@@ -125,6 +125,27 @@ module Chainer
       super
     end
 
+    def copy
+      children = @children.map do |child|
+        if child.is_a?(Chain)
+          child.copy
+        else
+          child.dup
+        end
+      end
+      ret = self.clone
+      ret.instance_variable_set(:@children, children)
+      ret.instance_variables.each do |name|
+        val = ret.instance_variable_get(name)
+        if val.is_a?(Chain)
+          ret.instance_variable_set(name, val.copy)
+        else
+          ret.instance_variable_set(name, val.clone)
+        end
+      end
+      ret
+    end
+
     def params(include_uninit: true)
       super(include_uninit: include_uninit) do |param|
         yield param

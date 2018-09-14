@@ -44,7 +44,7 @@ module Chainer
         newaxes_a = notin + axes_a
         n2 = 1
         axes_a.each do |axis|
-          n2 *= as[axis]
+          n2.inplace * as[axis]
         end
         tmp = a.shape.reduce(:*) / n2
         newshape_a = [tmp, n2]
@@ -54,7 +54,7 @@ module Chainer
         newaxes_b = axes_b + notin
         n2 = 1
         axes_b.each do |axis|
-          n2 *= bs[axis]
+          n2.inplace * bs[axis]
         end
         tmp = b.shape.reduce(:*) / n2
         newshape_b = [n2, tmp]

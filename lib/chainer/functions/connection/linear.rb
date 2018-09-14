@@ -29,7 +29,7 @@ module Chainer
 
           if inputs.size == 3
             b = inputs[2]
-            y += b
+            y.inplace + b
           end
 <<<<<<< HEAD
 

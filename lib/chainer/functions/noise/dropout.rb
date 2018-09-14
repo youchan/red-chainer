@@ -30,7 +30,7 @@ module Chainer
 
             @mask = x[0].class.zeros(*x[0].shape)
             @mask[flag] = 1
-            @mask *= scale
+            @mask.inplace * scale
           end
           [x[0] * @mask]
         end
