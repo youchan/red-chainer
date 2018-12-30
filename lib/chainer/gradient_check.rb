@@ -232,7 +232,7 @@ module Chainer
     params.each do |p|
       gp, = numerical_grad(f, [p.data], y_grad, eps)
       Chainer::Testing.assert_allclose(p.grad, gp, atol: atol, rtol: rtol)
-      raise unless gp.dtype === p.grad.dtype
+      raise unless gp.class == p.grad.class
     end
   end
   module_function :_copy_arrays, :numerical_grad, :_as_tuple, :check_backward
