@@ -6,11 +6,12 @@
 require "optparse"
 require "chainer"
 require_relative "./model"
+require_relative "./dataset"
 
 args =
 {
   model: "model.npz",
-  primetext: "cat",
+  primetext: "愛",
   seed: 123,
   unit: 650,
   sample: 1,
@@ -33,9 +34,9 @@ Numo::NArray.srand(args[:seed])
 Chainer.configuration.train = false
 
 # load vocabulary
-train = Datasets::PennTreebank.new(type: :train)
-valid = Datasets::PennTreebank.new(type: :valid)
-test = Datasets::PennTreebank.new(type: :test)
+train = UtamapLyrics.new(type: :train)
+valid = UtamapLyrics.new(type: :valid)
+test = UtamapLyrics.new(type: :test)
 bow = BagOfWords.new(:train, train)
 bow.add(:valid, valid)
 bow.add(:test, test)

@@ -1,6 +1,10 @@
-class UtamapLyrics < Dataset
+require "datasets"
+require "natto"
+require "fileutils"
+
+class UtamapLyrics < Datasets::Dataset
   Record = Struct.new(:word)
-  DATA_DIR = ""
+  DATA_DIR = "/home/youchan/Projects/RubyKaigi2019/src/crawler/download/"
   VALID_TYPES = [:train, :test, :valid]
 
   def initialize(type: :train)
@@ -25,6 +29,8 @@ class UtamapLyrics < Dataset
   def each(&block)
     return to_enum(__method__) unless block_given?
 
+    base_name = "utamap.#{@type}.txt"
+    data_path = cache_dir_path + base_name
     parse_data(data_path, &block)
   end
 
@@ -36,9 +42,10 @@ class UtamapLyrics < Dataset
     VALID_TYPES.each do |type|
       base_name = "utamap.#{type}.txt"
       data_path = cache_dir_path + base_name
+      FileUtils.mkdir_p cache_dir_path
       unless data_path.exist?
         File.open(data_path, "w") do |out_file|
-          Dir.glob(DATA_DIR + *.txt).sample(n_samples[type]).each do |name|
+          Dir.glob(DATA_DIR + "*.txt").sample(n_samples[type]).each do |name|
             File.open(name) do |in_file|
               in_file.each_line do |line|
                 out_file.puts nm.parse(line)

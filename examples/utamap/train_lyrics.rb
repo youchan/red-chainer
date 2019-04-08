@@ -2,11 +2,12 @@ require "numo/linalg"
 require "chainer"
 require "optionparser"
 require_relative "./model"
+require_relative "./dataset"
 
 # Routine to rewrite the result dictionary of LogReport to add perplexity
 # values
 compute_perplexity = Proc.new do |result|
-  result['perplexity'] = np.exp(result['main/loss'])
+  result['perplexity'] = Numo::NMath.exp(result['main/loss'])
   if result.key?('validation/main/loss')
     result['val_perplexity'] = Numo::NMath.exp(result['validation/main/loss'])
   end
@@ -42,9 +43,9 @@ opt.parse!(ARGV)
 
 # Load the Penn Tree Bank long word sequence dataset
 
-train = Datasets::PennTreebank.new(type: :train)
-valid = Datasets::PennTreebank.new(type: :valid)
-test = Datasets::PennTreebank.new(type: :test)
+train = UtamapLyrics.new(type: :train)
+valid = UtamapLyrics.new(type: :valid)
+test = UtamapLyrics.new(type: :test)
 
 bow = BagOfWords.new(:train, train)
 bow.add(:valid, valid)
