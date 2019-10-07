@@ -13,6 +13,7 @@ class CBoW < Chainer::Chain
     e = @embed.(contexts)
     h = F.sum(e, axis=1) * (1. / contexts.shape[1])
     loss = @loss_func.(h, x)
+    Chainer::Reporter.save_report({loss: loss}, self)
     loss
   end
 end

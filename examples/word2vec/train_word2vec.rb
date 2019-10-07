@@ -103,13 +103,13 @@ class WindowIterator < Chainer::Dataset::Iterator
   end
 end
 
-class BagOfWords
-  attr_reader :counter, :vocabularies, :ids
+class Documents
+  attr_reader :ids
 
   def initialize(name, enum)
     @ids = {}
-    @counter = {}
-    @vocabularies = {}
+    @word2id = {}
+    @id2word = {}
     add(name, enum)
   end
 
@@ -117,16 +117,25 @@ class BagOfWords
     ids = []
     @ids[name] = ids
     enum.each do |v|
-      @counter[v.word] = @counter[v.word].yield_self{|c| c ? c + 1 : 0 }
-      unless @vocabularies.key?(v.word)
-        @vocabularies[v.word] = @vocabularies.size
+      unless @word2id.key?(v.word)
+        id = @word2id.size
+        @word2id[v.word] = id
+        @id2word[id] = v.word
       end
-      ids << @vocabularies[v.word]
+      ids << @word2id[word]
     end
   end
 
-  def [](id)
-    @vocabularies.keys[id]
+  def word(id)
+    @id2word[id]
+  end
+
+  def id(word)
+    @word2id[word]
+  end
+
+  def vocabulary_count
+    @id2word.size
   end
 end
 
@@ -135,19 +144,19 @@ converter = Proc.new do |batch, device|
 end
 
 train = Datasets::PennTreebank.new(type: :train)
-valid = Datasets::PennTreebank.new(type: :train)
+valid = Datasets::PennTreebank.new(type: :valid)
 
-bow = BagOfWords.new(:train, train)
-bow.add(:valid, valid)
+docs = Documents.new(:train, train)
+docs.add(:valid, valid)
 
-n_vocab = bow.vocabularies.size + 1
+n_vocab = docs.vocabulary_count
 
 if args[:test]
-  train_ids = bow.ids[:train].take(100)
-  valid_ids = bow.ids[:valid].take(100)
+  train_ids = docs.ids[:train].take(100)
+  valid_ids = docs.ids[:valid].take(100)
 else
-  train_ids = bow.ids[:train]
-  valid_ids = bow.ids[:valid]
+  train_ids = docs.ids[:train]
+  valid_ids = docs.ids[:valid]
 end
 
 puts "n_vocab: #{n_vocab}"
@@ -199,6 +208,6 @@ open('word2vec.model', 'w') do |f|
   w = model.embed.w.data
   w.shape.first.times do |i|
     v = w[i, true].to_a.join(' ')
-    f.write("#{bow[i]} #{v}\n")
+    f.write("#{docs.word(i)} #{v}\n")
   end
 end
